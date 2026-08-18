@@ -1,0 +1,43 @@
+import 'package:equatable/equatable.dart';
+import '../../../domain/entities/customer.dart';
+
+abstract class AuthState extends Equatable {
+  const AuthState();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class AuthInitial extends AuthState {}
+
+class AuthLoading extends AuthState {}
+
+class Authenticated extends AuthState {
+  final Customer customer;
+  final String? accessToken;
+
+  const Authenticated(this.customer, {this.accessToken});
+
+  @override
+  List<Object?> get props => [customer, accessToken];
+}
+
+class Unauthenticated extends AuthState {}
+
+class AuthError extends AuthState {
+  final String message;
+
+  const AuthError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class RegisterSuccess extends AuthState {
+  final String message;
+
+  const RegisterSuccess(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
