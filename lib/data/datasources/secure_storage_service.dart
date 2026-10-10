@@ -8,6 +8,7 @@ class SecureStorageService {
             const FlutterSecureStorage(
               aOptions: AndroidOptions(
                 encryptedSharedPreferences: true,
+                resetOnError: true,
               ),
               iOptions: IOSOptions(
                 accessibility: KeychainAccessibility.first_unlock,
@@ -19,28 +20,45 @@ class SecureStorageService {
   static const String _keyCustomerPassword = 'customer_password';
 
   Future<void> saveCustomerToken(String token) async {
-    await _storage.write(key: _keyCustomerToken, value: token);
+    try {
+      await _storage.write(key: _keyCustomerToken, value: token);
+    } catch (_) {
+      try {
+        await _storage.deleteAll();
+        await _storage.write(key: _keyCustomerToken, value: token);
+      } catch (_) {}
+    }
   }
 
   Future<String?> getCustomerToken() async {
-    return await _storage.read(key: _keyCustomerToken);
+    try {
+      return await _storage.read(key: _keyCustomerToken);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> saveCredentials(String email, String password) async {
-    await _storage.write(key: _keyCustomerEmail, value: email);
-    await _storage.write(key: _keyCustomerPassword, value: password);
+    try {
+      await _storage.write(key: _keyCustomerEmail, value: email);
+      await _storage.write(key: _keyCustomerPassword, value: password);
+    } catch (_) {}
   }
 
   Future<Map<String, String>?> getCredentials() async {
-    final email = await _storage.read(key: _keyCustomerEmail);
-    final password = await _storage.read(key: _keyCustomerPassword);
-    if (email != null && password != null) {
-      return {'email': email, 'password': password};
-    }
+    try {
+      final email = await _storage.read(key: _keyCustomerEmail);
+      final password = await _storage.read(key: _keyCustomerPassword);
+      if (email != null && password != null) {
+        return {'email': email, 'password': password};
+      }
+    } catch (_) {}
     return null;
   }
 
   Future<void> clearAll() async {
-    await _storage.deleteAll();
+    try {
+      await _storage.deleteAll();
+    } catch (_) {}
   }
 }

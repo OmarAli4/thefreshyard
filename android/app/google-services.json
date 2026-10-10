@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "825455455996",
+    "project_id": "thefreshyard-45b7e",
+    "storage_bucket": "thefreshyard-45b7e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:825455455996:android:23123cf79fd32ef34a3179",
+        "android_client_info": {
+          "package_name": "com.thefreshyard.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkvDF3mQLewJpdWpbcMaw81_AbAfp5jqA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -49,14 +49,23 @@ class CollectionRemoteDataSourceImpl implements ICollectionRemoteDataSource {
               if (edge is Map) {
                 final node = edge['node'];
                 if (node is Map) {
+                  final id = node['id']?.toString() ?? '';
+                  final title = node['title']?.toString() ?? '';
+                  final handle = node['handle']?.toString() ?? '';
+                  final imageUrl = node['image']?['url']?.toString() ?? '';
+
                   collections.add({
-                    'title': node['title']?.toString() ?? '',
-                    'handle': node['handle']?.toString() ?? '',
+                    'id': id,
+                    'title': title,
+                    'handle': handle,
+                    'imageUrl': imageUrl,
                   });
                 }
               }
             }
-            break; // Stop falling back if successful
+            if (collections.isNotEmpty) {
+              return collections;
+            }
           }
         }
       } catch (e) {

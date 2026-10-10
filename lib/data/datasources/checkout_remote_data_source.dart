@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/constants/api_constants.dart';
+import '../../core/services/app_analytics_service.dart';
 import '../../domain/entities/cart_item.dart';
 import 'customer_remote_data_source.dart';
 import 'secure_storage_service.dart';
@@ -39,10 +41,16 @@ class CheckoutRemoteDataSourceImpl implements ICheckoutRemoteDataSource {
   };
 
   Future<http.Response> _postGraphQL(String body) async {
-    final urls = [
-      Uri.parse(ApiConstants.graphqlEndpoint),
-      Uri.parse(ApiConstants.corsProxyEndpoint),
-    ];
+    final List<Uri> urls = kIsWeb
+        ? [
+            Uri.parse(ApiConstants.graphqlEndpoint),
+            Uri.parse('https://api.codetabs.com/v1/proxy?quest=${Uri.encodeComponent(ApiConstants.graphqlEndpoint)}'),
+            Uri.parse('https://thingproxy.freeboard.io/fetch/${ApiConstants.graphqlEndpoint}'),
+            Uri.parse(ApiConstants.corsProxyEndpoint),
+          ]
+        : [
+            Uri.parse(ApiConstants.graphqlEndpoint),
+          ];
 
     for (var url in urls) {
       try {
@@ -65,7 +73,25 @@ class CheckoutRemoteDataSourceImpl implements ICheckoutRemoteDataSource {
       throw Exception('Cannot create checkout session for an empty cart.');
     }
 
-    final lines = items.map((item) {
+    final validItems = items.where((item) {
+      final id = item.selectedVariant.id;
+      return !id.startsWith('fallback_') && !id.startsWith('v_offer_') && !id.startsWith('mock_');
+    }).toList();
+
+    if (validItems.isEmpty) {
+      throw Exception('Your cart contains offline items. Please clear cart and re-add your fresh products.');
+    }
+
+    // Record App Order Metrics in Analytics Service
+    final totalOrderAmount = validItems.fold(0.0, (sum, i) => sum + (i.selectedVariant.price * i.quantity));
+    final totalOrderItems = validItems.fold(0, (sum, i) => sum + i.quantity);
+
+    AppAnalyticsService.instance.recordCheckout(
+      totalAmount: totalOrderAmount,
+      itemsCount: totalOrderItems,
+    );
+
+    final lines = validItems.map((item) {
       return {
         'merchandiseId': item.selectedVariant.id,
         'quantity': item.quantity,
@@ -105,6 +131,10 @@ class CheckoutRemoteDataSourceImpl implements ICheckoutRemoteDataSource {
   Future<String> _executeCartCreate(List<Map<String, dynamic>> lines, String? token) async {
     final Map<String, dynamic> cartInput = {
       'lines': lines,
+      'attributes': [
+        {'key': 'Order Source', 'value': 'Fresh Yard Mobile App'},
+        {'key': 'App Attribution', 'value': 'Mobile Storefront'},
+      ],
     };
     if (token != null && token.isNotEmpty) {
       cartInput['buyerIdentity'] = {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../domain/entities/cart_item.dart';
 import '../bloc/cart/cart_bloc.dart';
@@ -22,14 +24,15 @@ class CartItemTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.brandDarkGreen.withValues(alpha: 0.1),
+          color: AppColors.dividerColor,
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -37,24 +40,35 @@ class CartItemTile extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // Product Image with CachedNetworkImage
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Container(
-              width: 75,
-              height: 75,
-              color: const Color(0xFFF1E9D7),
+              width: 70,
+              height: 70,
+              color: const Color(0xFFF7F7F3),
               child: product.imageUrl != null
-                  ? Image.network(
-                      product.imageUrl!,
+                  ? CachedNetworkImage(
+                      imageUrl: product.imageUrl!,
+                      memCacheWidth: 200,
+                      memCacheHeight: 200,
                       fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(color: const Color(0xFFEEEEEE)),
+                      errorWidget: (context, url, error) => const Icon(
+                        Icons.local_florist,
+                        color: AppColors.brandEmerald,
+                        size: 30,
+                      ),
                     )
                   : const Icon(
                       Icons.local_florist,
-                      color: AppColors.brandDarkGreen,
+                      color: AppColors.brandEmerald,
+                      size: 30,
                     ),
             ),
           ),
           const SizedBox(width: 12),
+          // Info & Price
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,74 +80,76 @@ class CartItemTile extends StatelessWidget {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: AppColors.brandDarkGreen,
+                    color: AppColors.brandTextDark,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
-                  variant.title != 'Default Title'
-                      ? variant.title
-                      : 'Standard Unit',
-                  style: TextStyle(
+                  variant.title != 'Default Title' ? variant.title : 'Standard Unit',
+                  style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: AppColors.textMuted,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'LE ${item.totalPrice.toStringAsFixed(2)}',
+                  'LE ${item.totalPrice.toStringAsFixed(0)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
-                    color: AppColors.brandDarkGreen,
+                    color: AppColors.brandEmerald,
                     fontSize: 15,
+                    fontFamily: 'sans-serif',
                   ),
                 ),
               ],
             ),
           ),
+          // Stepper + Delete Action
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
                 icon: const Icon(
-                  Icons.delete_outline,
-                  color: Colors.redAccent,
-                  size: 20,
+                  Icons.close_rounded,
+                  color: AppColors.textSubtle,
+                  size: 18,
                 ),
-                onPressed: () => context.read<CartBloc>().add(
-                  RemoveFromCartEvent(variant.id),
-                ),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  context.read<CartBloc>().add(RemoveFromCartEvent(variant.id));
+                },
               ),
+              const SizedBox(height: 6),
               Container(
                 height: 32,
                 decoration: BoxDecoration(
+                  color: AppColors.brandLightGreen,
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: AppColors.brandDarkGreen.withValues(
-                      alpha: 0.3,
-                    ),
+                    color: AppColors.brandFreshGreen.withValues(alpha: 0.5),
                   ),
-                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   children: [
                     IconButton(
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 28,
-                        minHeight: 28,
-                      ),
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                       icon: const Icon(
                         Icons.remove,
                         size: 14,
-                        color: AppColors.brandDarkGreen,
+                        color: AppColors.brandEmerald,
                       ),
-                      onPressed: () =>
-                          context.read<CartBloc>().add(
-                            UpdateQuantityEvent(
-                              variant.id,
-                              item.quantity - 1,
-                            ),
-                          ),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        context.read<CartBloc>().add(
+                              UpdateQuantityEvent(
+                                variant.id,
+                                item.quantity - 1,
+                              ),
+                            );
+                      },
                     ),
                     Text(
                       '${item.quantity}',
@@ -145,22 +161,21 @@ class CartItemTile extends StatelessWidget {
                     ),
                     IconButton(
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 28,
-                        minHeight: 28,
-                      ),
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                       icon: const Icon(
                         Icons.add,
                         size: 14,
-                        color: AppColors.brandDarkGreen,
+                        color: AppColors.brandEmerald,
                       ),
-                      onPressed: () =>
-                          context.read<CartBloc>().add(
-                            UpdateQuantityEvent(
-                              variant.id,
-                              item.quantity + 1,
-                            ),
-                          ),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        context.read<CartBloc>().add(
+                              UpdateQuantityEvent(
+                                variant.id,
+                                item.quantity + 1,
+                              ),
+                            );
+                      },
                     ),
                   ],
                 ),

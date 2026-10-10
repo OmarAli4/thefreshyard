@@ -53,3 +53,5 @@ class CreateCheckoutSessionEvent extends CartEvent {
   @override
   List<Object?> get props => [customerAccessToken];
 }
+
+class ResetCheckoutStateEvent extends CartEvent {}

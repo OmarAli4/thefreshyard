@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Keystores & Production Signing
+*.keystore
+*.jks
+key.properties
+**/android/key.properties
+cloudflared.exe
+play_store_assets/
+*.py
+fruits_list.txt

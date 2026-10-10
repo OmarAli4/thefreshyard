@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_colors.dart';
 import '../bloc/auth/auth_bloc.dart';
@@ -15,8 +15,7 @@ class _AuthRegisterFormState extends State<AuthRegisterForm> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  bool _isPasswordVisible = false;
+
   String? _formValidationError;
 
   @override
@@ -24,8 +23,31 @@ class _AuthRegisterFormState extends State<AuthRegisterForm> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
+  }
+
+  void _submitRegister() {
+    final fn = _firstNameController.text.trim();
+    final ln = _lastNameController.text.trim();
+    final email = _emailController.text.trim();
+
+    if (fn.isEmpty) {
+      setState(() => _formValidationError = "Please enter your first name.");
+      return;
+    }
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _formValidationError = "Please enter a valid email address.");
+      return;
+    }
+
+    setState(() => _formValidationError = null);
+    context.read<AuthBloc>().add(
+      SendRegisterCodeEvent(
+        firstName: fn,
+        lastName: ln,
+        email: email,
+      ),
+    );
   }
 
   @override
@@ -65,10 +87,13 @@ class _AuthRegisterFormState extends State<AuthRegisterForm> {
               ],
             ),
           ),
+
+        // First Name
         TextField(
           controller: _firstNameController,
+          textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
-            labelText: "First Name",
+            labelText: "First Name *",
             labelStyle: const TextStyle(color: AppColors.brandDarkGreen),
             prefixIcon: const Icon(
               Icons.person_outline,
@@ -87,10 +112,13 @@ class _AuthRegisterFormState extends State<AuthRegisterForm> {
           ),
         ),
         const SizedBox(height: 14),
+
+        // Last Name
         TextField(
           controller: _lastNameController,
+          textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
-            labelText: "Last Name",
+            labelText: "Last Name (Optional)",
             labelStyle: const TextStyle(color: AppColors.brandDarkGreen),
             prefixIcon: const Icon(
               Icons.person_outline,
@@ -109,12 +137,16 @@ class _AuthRegisterFormState extends State<AuthRegisterForm> {
           ),
         ),
         const SizedBox(height: 14),
+
+        // Email Address
         TextField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
-            labelText: "Email Address",
+            labelText: "Email Address *",
             hintText: "example@gmail.com",
+            helperText: "No password required. We'll send you an instant verification code.",
+            helperStyle: TextStyle(color: Colors.grey[600], fontSize: 12),
             labelStyle: const TextStyle(color: AppColors.brandDarkGreen),
             prefixIcon: const Icon(
               Icons.email_outlined,
@@ -131,42 +163,11 @@ class _AuthRegisterFormState extends State<AuthRegisterForm> {
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-        ),
-        const SizedBox(height: 14),
-        TextField(
-          controller: _passwordController,
-          obscureText: !_isPasswordVisible,
-          decoration: InputDecoration(
-            labelText: "Password (min 6 characters)",
-            labelStyle: const TextStyle(color: AppColors.brandDarkGreen),
-            prefixIcon: const Icon(
-              Icons.lock_outline,
-              color: AppColors.brandDarkGreen,
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isPasswordVisible
-                    ? Icons.visibility_off
-                    : Icons.visibility,
-                color: AppColors.brandDarkGreen,
-              ),
-              onPressed: () => setState(
-                () => _isPasswordVisible = !_isPasswordVisible,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                color: AppColors.brandDarkGreen,
-                width: 2,
-              ),
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
+          onSubmitted: (_) => _submitRegister(),
         ),
         const SizedBox(height: 24),
+
+        // Submit Button
         SizedBox(
           width: double.infinity,
           height: 52,
@@ -179,44 +180,7 @@ class _AuthRegisterFormState extends State<AuthRegisterForm> {
                 borderRadius: BorderRadius.circular(26),
               ),
             ),
-            onPressed: () {
-              final fn = _firstNameController.text.trim();
-              final ln = _lastNameController.text.trim();
-              final email = _emailController.text.trim();
-              final pass = _passwordController.text.trim();
-
-              if (fn.isEmpty) {
-                setState(
-                  () => _formValidationError =
-                      "Please enter your first name.",
-                );
-                return;
-              }
-              if (email.isEmpty || !email.contains('@')) {
-                setState(
-                  () => _formValidationError =
-                      "Please enter a valid email address.",
-                );
-                return;
-              }
-              if (pass.length < 6) {
-                setState(
-                  () => _formValidationError =
-                      "Password must be at least 6 characters.",
-                );
-                return;
-              }
-
-              setState(() => _formValidationError = null);
-              context.read<AuthBloc>().add(
-                RegisterEvent(
-                  firstName: fn,
-                  lastName: ln,
-                  email: email,
-                  password: pass,
-                ),
-              );
-            },
+            onPressed: _submitRegister,
             icon: const Icon(
               Icons.person_add_alt_1,
               color: AppColors.brandGold,

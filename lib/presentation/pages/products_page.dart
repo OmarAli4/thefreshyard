@@ -7,9 +7,8 @@ import '../bloc/cart/cart_state.dart';
 import '../../core/theme/app_colors.dart';
 import '../widgets/top_promo_banner.dart';
 import '../widgets/custom_header_app_bar.dart';
-import '../widgets/app_drawer.dart';
 import '../views/home_view.dart';
-import '../views/search_view.dart';
+import '../views/categories_view.dart';
 import '../views/cart_view.dart';
 import '../views/profile_view.dart';
 
@@ -53,7 +52,7 @@ class _ProductsViewState extends State<ProductsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.brandCream,
-      drawer: const AppDrawer(),
+      drawerEnableOpenDragGesture: false,
       bottomNavigationBar: BlocBuilder<CartBloc, CartState>(
         builder: (context, cartState) {
           return BottomNavigationBar(
@@ -66,12 +65,12 @@ class _ProductsViewState extends State<ProductsView> {
             onTap: _onTabSelected,
             items: [
               const BottomNavigationBarItem(
-                icon: Icon(Icons.home),
+                icon: Icon(Icons.home_rounded),
                 label: 'Home',
               ),
               const BottomNavigationBarItem(
-                icon: Icon(Icons.search),
-                label: 'Search',
+                icon: Icon(Icons.grid_view_rounded),
+                label: 'Collections',
               ),
               BottomNavigationBarItem(
                 icon: Badge(
@@ -90,7 +89,7 @@ class _ProductsViewState extends State<ProductsView> {
                 label: 'Cart',
               ),
               const BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
+                icon: Icon(Icons.person_outline_rounded),
                 label: 'Profile',
               ),
             ],
@@ -109,7 +108,7 @@ class _ProductsViewState extends State<ProductsView> {
                 index: _selectedIndex,
                 children: [
                   HomeView(onGoToCart: navigateToCart),
-                  SearchView(onGoToCart: navigateToCart),
+                  CategoriesView(onGoToCart: navigateToCart),
                   CartView(onExploreProducts: () => _onTabSelected(0)),
                   const ProfileView(),
                 ],

@@ -44,16 +44,7 @@ class _AnimatedDrawingTextLogoState extends State<AnimatedDrawingTextLogo>
     matrix.setTranslationRaw(-bounds.left, -bounds.top, 0.0);
     _textPath = _textPath.transform(matrix.storage);
 
-    // Start the animation with a listener to pause and repeat
-    _controller.addStatusListener((status) async {
-      if (status == AnimationStatus.completed) {
-        // Pause for 1.5 seconds when the logo is fully drawn before restarting
-        await Future.delayed(const Duration(milliseconds: 1500));
-        if (mounted) {
-          _controller.forward(from: 0.0);
-        }
-      }
-    });
+    // Run animation once and stay permanently drawn
     _controller.forward();
   }
 

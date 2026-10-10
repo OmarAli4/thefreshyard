@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_colors.dart';
 import '../bloc/cart/cart_bloc.dart';
 import '../bloc/cart/cart_state.dart';
-import 'animated_drawing_text_logo.dart';
+import 'animated_logo.dart';
 
 class CustomHeaderAppBar extends StatelessWidget {
   final VoidCallback onCartTap;
@@ -18,18 +18,16 @@ class CustomHeaderAppBar extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: AppColors.brandDarkGreen,
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: SizedBox(
-        height: 50,
+        height: 52,
         child: Stack(
           children: [
             const Positioned.fill(
               child: Center(
-                child: AnimatedDrawingTextLogo(
-                  height: 24.0,
-                  strokeColor: AppColors.brandGold,
-                  fillColor: AppColors.brandGold,
-                  duration: Duration(seconds: 3),
+                child: TheFreshYardBrandLogo(
+                  height: 52,
+                  color: AppColors.brandGold,
                 ),
               ),
             ),
@@ -39,20 +37,7 @@ class CustomHeaderAppBar extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Builder(
-                          builder: (innerContext) => GestureDetector(
-                            onTap: () => Scaffold.of(innerContext).openDrawer(),
-                            child: const Icon(
-                              Icons.menu,
-                              color: AppColors.brandGold,
-                              size: 26,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(width: 26),
                     BlocBuilder<CartBloc, CartState>(
                       builder: (context, cartState) {
                         return GestureDetector(

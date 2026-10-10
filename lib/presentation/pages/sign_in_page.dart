@@ -20,25 +20,58 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPageState extends State<SignInPage> {
   bool _isLoginTab = true;
-  bool _isPasswordVisible = false;
   String? _formValidationError;
 
   final TextEditingController _loginEmailController = TextEditingController();
-  final TextEditingController _loginPasswordController = TextEditingController();
   final TextEditingController _regFirstNameController = TextEditingController();
   final TextEditingController _regLastNameController = TextEditingController();
   final TextEditingController _regEmailController = TextEditingController();
-  final TextEditingController _regPasswordController = TextEditingController();
 
   @override
   void dispose() {
     _loginEmailController.dispose();
-    _loginPasswordController.dispose();
     _regFirstNameController.dispose();
     _regLastNameController.dispose();
     _regEmailController.dispose();
-    _regPasswordController.dispose();
     super.dispose();
+  }
+
+  void _confirmLogin() {
+    final email = _loginEmailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _formValidationError = "Please enter your registered email address.");
+      return;
+    }
+    setState(() => _formValidationError = null);
+    context.read<AuthBloc>().add(
+      SendLoginCodeEvent(
+        email: email,
+      ),
+    );
+  }
+
+  void _submitRegister() {
+    final fn = _regFirstNameController.text.trim();
+    final ln = _regLastNameController.text.trim();
+    final email = _regEmailController.text.trim();
+
+    if (fn.isEmpty) {
+      setState(() => _formValidationError = "Please enter your first name.");
+      return;
+    }
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _formValidationError = "Please enter a valid email address.");
+      return;
+    }
+
+    setState(() => _formValidationError = null);
+    context.read<AuthBloc>().add(
+      SendRegisterCodeEvent(
+        firstName: fn,
+        lastName: ln,
+        email: email,
+      ),
+    );
   }
 
   @override
@@ -81,40 +114,26 @@ class _SignInPageState extends State<SignInPage> {
                 ),
               ),
             );
-          } else if (state is RegisterSuccess) {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                backgroundColor: brandDarkGreen,
-                content: Row(
-                  children: [
-                    const Icon(Icons.check_circle_outline, color: brandGold),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        state.message,
-                        style: const TextStyle(color: brandGold, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-            setState(() {
-              _isLoginTab = true;
-              _formValidationError = null;
-            });
           } else if (state is Authenticated) {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 backgroundColor: brandDarkGreen,
+                duration: const Duration(seconds: 2),
                 content: Text(
                   'Welcome, ${state.customer.fullName}!',
                   style: const TextStyle(color: brandGold, fontWeight: FontWeight.bold),
                 ),
               ),
             );
+            final nav = Navigator.of(context);
+            if (nav.canPop()) {
+              Future.delayed(const Duration(milliseconds: 600), () {
+                if (mounted && nav.canPop()) {
+                  nav.pop();
+                }
+              });
+            }
           }
         },
         builder: (context, state) {
@@ -125,7 +144,10 @@ class _SignInPageState extends State<SignInPage> {
                 children: [
                   CircularProgressIndicator(color: brandDarkGreen),
                   SizedBox(height: 16),
-                  Text("Authenticating with Shopify...", style: TextStyle(color: brandDarkGreen, fontWeight: FontWeight.bold, fontSize: 15)),
+                  Text(
+                    "Connecting to The Fresh Yard...",
+                    style: TextStyle(color: brandDarkGreen, fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
                 ],
               ),
             );
@@ -150,7 +172,11 @@ class _SignInPageState extends State<SignInPage> {
                       ),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
-                        BoxShadow(color: brandDarkGreen.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4)),
+                        BoxShadow(
+                          color: brandDarkGreen.withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
                       ],
                     ),
                     child: Column(
@@ -176,7 +202,12 @@ class _SignInPageState extends State<SignInPage> {
                                 children: [
                                   Text(
                                     customer.fullName.isNotEmpty ? customer.fullName : 'Valued Customer',
-                                    style: const TextStyle(color: brandGold, fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Georgia'),
+                                    style: const TextStyle(
+                                      color: brandGold,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Georgia',
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(customer.email, style: TextStyle(color: brandCream.withValues(alpha: 0.9), fontSize: 13)),
@@ -199,6 +230,24 @@ class _SignInPageState extends State<SignInPage> {
                             label: const Text("Sign Out", style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: brandGold,
+                              side: const BorderSide(color: brandGold),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            ),
+                            onPressed: () {
+                              if (Navigator.of(context).canPop()) {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            icon: const Icon(Icons.storefront_outlined, color: brandGold),
+                            label: const Text("Continue Shopping", style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -214,7 +263,7 @@ class _SignInPageState extends State<SignInPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 10),
-                
+
                 // Luxury Hero Card Header
                 Container(
                   width: double.infinity,
@@ -227,29 +276,48 @@ class _SignInPageState extends State<SignInPage> {
                     ),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
-                      BoxShadow(color: brandDarkGreen.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4)),
+                      BoxShadow(
+                        color: brandDarkGreen.withValues(alpha: 0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: Column(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(color: brandGold.withValues(alpha: 0.2), shape: BoxShape.circle),
-                        child: const Icon(Icons.lock_person_outlined, color: brandGold, size: 38),
+                        decoration: BoxDecoration(
+                          color: brandGold.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          _isLoginTab ? Icons.lock_person_outlined : Icons.person_add_alt_1,
+                          color: brandGold,
+                          size: 38,
+                        ),
                       ),
                       const SizedBox(height: 14),
                       Text(
-                        _isLoginTab ? "Sign In to Your Account" : "Join The Fresh Yard",
+                        _isLoginTab ? "Welcome Back" : "Join The Fresh Yard",
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: brandGold, fontSize: 24, fontWeight: FontWeight.bold, fontFamily: 'Georgia'),
+                        style: const TextStyle(
+                          color: brandGold,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Georgia',
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         _isLoginTab
-                            ? "Enter your credentials to access your organic order history & saved addresses."
-                            : "Create a new member account to enjoy fast checkout & exclusive organic perks.",
+                            ? "Sign in with your email to access your account."
+                            : "Create your member account to enjoy fast express delivery & member perks.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: brandCream.withValues(alpha: 0.85), fontSize: 13),
+                        style: TextStyle(
+                          color: brandCream.withValues(alpha: 0.85),
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -264,81 +332,15 @@ class _SignInPageState extends State<SignInPage> {
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: brandGold.withValues(alpha: 0.35), width: 1.2),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4)),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: Column(
                     children: [
-                      // Segmented Pill Switcher
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: brandDarkGreen.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _isLoginTab = true;
-                                    _formValidationError = null;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: _isLoginTab ? brandDarkGreen : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(25),
-                                    boxShadow: _isLoginTab ? [BoxShadow(color: brandDarkGreen.withValues(alpha: 0.25), blurRadius: 4)] : [],
-                                  ),
-                                  child: Text(
-                                    "Sign In",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: _isLoginTab ? brandGold : brandDarkGreen,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _isLoginTab = false;
-                                    _formValidationError = null;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: !_isLoginTab ? brandDarkGreen : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(25),
-                                    boxShadow: !_isLoginTab ? [BoxShadow(color: brandDarkGreen.withValues(alpha: 0.25), blurRadius: 4)] : [],
-                                  ),
-                                  child: Text(
-                                    "Create Account",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: !_isLoginTab ? brandGold : brandDarkGreen,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
                       // Validation Error Banner
                       if (_formValidationError != null)
                         Container(
@@ -355,14 +357,21 @@ class _SignInPageState extends State<SignInPage> {
                               const Icon(Icons.info_outline, color: Colors.redAccent, size: 20),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: Text(_formValidationError!, style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 13)),
+                                child: Text(
+                                  _formValidationError!,
+                                  style: const TextStyle(
+                                    color: Colors.redAccent,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
 
                       if (_isLoginTab) ...[
-                        // SIGN IN FORM
+                        // SIGN IN FORM — Email + Button
                         TextField(
                           controller: _loginEmailController,
                           keyboardType: TextInputType.emailAddress,
@@ -371,27 +380,15 @@ class _SignInPageState extends State<SignInPage> {
                             hintText: "example@gmail.com",
                             labelStyle: const TextStyle(color: brandDarkGreen),
                             prefixIcon: const Icon(Icons.email_outlined, color: brandDarkGreen),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: brandDarkGreen, width: 2)),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(color: brandDarkGreen, width: 2),
+                            ),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                           ),
+                          onSubmitted: (_) => _confirmLogin(),
                         ),
                         const SizedBox(height: 16),
-                        TextField(
-                          controller: _loginPasswordController,
-                          obscureText: !_isPasswordVisible,
-                          decoration: InputDecoration(
-                            labelText: "Password",
-                            labelStyle: const TextStyle(color: brandDarkGreen),
-                            prefixIcon: const Icon(Icons.lock_outline, color: brandDarkGreen),
-                            suffixIcon: IconButton(
-                              icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility, color: brandDarkGreen),
-                              onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
-                            ),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: brandDarkGreen, width: 2)),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -402,46 +399,42 @@ class _SignInPageState extends State<SignInPage> {
                               elevation: 3,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
                             ),
-                            onPressed: () {
-                              final email = _loginEmailController.text.trim();
-                              final pass = _loginPasswordController.text.trim();
-
-                              if (email.isEmpty || !email.contains('@')) {
-                                setState(() => _formValidationError = "Please enter a valid email address.");
-                                return;
-                              }
-                              if (pass.isEmpty) {
-                                setState(() => _formValidationError = "Please enter your password.");
-                                return;
-                              }
-
-                              setState(() => _formValidationError = null);
-                              context.read<AuthBloc>().add(LoginEvent(email: email, password: pass));
-                            },
-                            icon: const Icon(Icons.login, color: brandGold),
-                            label: const Text("Sign In", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            onPressed: _confirmLogin,
+                            icon: const Icon(Icons.login_rounded, color: brandGold, size: 22),
+                            label: const Text(
+                              "Sign In",
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
                           ),
                         ),
                       ] else ...[
                         // CREATE ACCOUNT FORM
                         TextField(
                           controller: _regFirstNameController,
+                          textCapitalization: TextCapitalization.words,
                           decoration: InputDecoration(
-                            labelText: "First Name",
+                            labelText: "First Name *",
                             labelStyle: const TextStyle(color: brandDarkGreen),
                             prefixIcon: const Icon(Icons.person_outline, color: brandDarkGreen),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: brandDarkGreen, width: 2)),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(color: brandDarkGreen, width: 2),
+                            ),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                         ),
                         const SizedBox(height: 14),
                         TextField(
                           controller: _regLastNameController,
+                          textCapitalization: TextCapitalization.words,
                           decoration: InputDecoration(
-                            labelText: "Last Name",
+                            labelText: "Last Name (Optional)",
                             labelStyle: const TextStyle(color: brandDarkGreen),
                             prefixIcon: const Icon(Icons.person_outline, color: brandDarkGreen),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: brandDarkGreen, width: 2)),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(color: brandDarkGreen, width: 2),
+                            ),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                         ),
@@ -450,29 +443,17 @@ class _SignInPageState extends State<SignInPage> {
                           controller: _regEmailController,
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
-                            labelText: "Email Address",
+                            labelText: "Email Address *",
                             hintText: "example@gmail.com",
                             labelStyle: const TextStyle(color: brandDarkGreen),
                             prefixIcon: const Icon(Icons.email_outlined, color: brandDarkGreen),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: brandDarkGreen, width: 2)),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        TextField(
-                          controller: _regPasswordController,
-                          obscureText: !_isPasswordVisible,
-                          decoration: InputDecoration(
-                            labelText: "Password (min 6 characters)",
-                            labelStyle: const TextStyle(color: brandDarkGreen),
-                            prefixIcon: const Icon(Icons.lock_outline, color: brandDarkGreen),
-                            suffixIcon: IconButton(
-                              icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility, color: brandDarkGreen),
-                              onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(color: brandDarkGreen, width: 2),
                             ),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: brandDarkGreen, width: 2)),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                           ),
+                          onSubmitted: (_) => _submitRegister(),
                         ),
                         const SizedBox(height: 24),
                         SizedBox(
@@ -485,38 +466,46 @@ class _SignInPageState extends State<SignInPage> {
                               elevation: 3,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
                             ),
-                            onPressed: () {
-                              final fn = _regFirstNameController.text.trim();
-                              final ln = _regLastNameController.text.trim();
-                              final email = _regEmailController.text.trim();
-                              final pass = _regPasswordController.text.trim();
-
-                              if (fn.isEmpty) {
-                                setState(() => _formValidationError = "Please enter your first name.");
-                                return;
-                              }
-                              if (email.isEmpty || !email.contains('@')) {
-                                setState(() => _formValidationError = "Please enter a valid email address.");
-                                return;
-                              }
-                              if (pass.length < 6) {
-                                setState(() => _formValidationError = "Password must be at least 6 characters.");
-                                return;
-                              }
-
-                              setState(() => _formValidationError = null);
-                              context.read<AuthBloc>().add(RegisterEvent(
-                                firstName: fn,
-                                lastName: ln,
-                                email: email,
-                                password: pass,
-                              ));
-                            },
+                            onPressed: _submitRegister,
                             icon: const Icon(Icons.person_add_alt_1, color: brandGold),
                             label: const Text("Create Account", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           ),
                         ),
                       ],
+
+                      const SizedBox(height: 16),
+
+                      // Toggle link
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isLoginTab = !_isLoginTab;
+                            _formValidationError = null;
+                          });
+                        },
+                        child: Text.rich(
+                          TextSpan(
+                            text: _isLoginTab
+                                ? "Don't have an account? "
+                                : "Already have an account? ",
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: _isLoginTab ? "Create Account" : "Sign In",
+                                style: const TextStyle(
+                                  color: brandDarkGreen,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -528,7 +517,7 @@ class _SignInPageState extends State<SignInPage> {
                   children: [
                     _buildBenefitBadge(Icons.eco_outlined, "100% Organic"),
                     _buildBenefitBadge(Icons.local_shipping_outlined, "Fast Express"),
-                    _buildBenefitBadge(Icons.security, "Shopify Secured"),
+                    _buildBenefitBadge(Icons.security, "Secured"),
                   ],
                 ),
                 const SizedBox(height: 16),

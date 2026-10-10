@@ -1,169 +1,156 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
-const Color _brandGold = Color(0xFFC4AB63);
-
-class AnimatedLogo extends StatefulWidget {
+class TheFreshYardBrandLogo extends StatelessWidget {
   final double height;
-  final bool showName;
-  
-  const AnimatedLogo({super.key, this.height = 50, this.showName = true});
+  final Color color;
 
-  @override
-  State<AnimatedLogo> createState() => _AnimatedLogoState();
-}
-
-class _AnimatedLogoState extends State<AnimatedLogo> with TickerProviderStateMixin {
-  late AnimationController _walkController;
-  late AnimationController _bounceController;
-  late Animation<double> _bounceAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    _walkController = AnimationController(
-      vsync: this, 
-      duration: const Duration(seconds: 8),
-    )..repeat();
-    
-    _bounceController = AnimationController(
-      vsync: this, 
-      duration: const Duration(milliseconds: 350),
-    )..repeat(reverse: true);
-    
-    _bounceAnimation = Tween<double>(begin: 0, end: -2.0).animate(
-      CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _walkController.dispose();
-    _bounceController.dispose();
-    super.dispose();
-  }
+  const TheFreshYardBrandLogo({
+    super.key,
+    this.height = 46.0,
+    this.color = AppColors.brandGold,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final manSize = widget.height * 0.9;
-    
-    final logoImage = Image.asset(
-      'assets/images/logo.png',
-      height: manSize,
-      filterQuality: FilterQuality.low,
-    );
+    return SizedBox(
+      height: height,
+      child: FittedBox(
+        fit: BoxFit.contain,
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 1. Sprout Leaves Vector
+            CustomPaint(
+              size: const Size(28, 14),
+              painter: _SproutLeavesPainter(color: color),
+            ),
+            const SizedBox(height: 1.0),
 
-    if (widget.showName) {
-      return RepaintBoundary(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final availableWidth = constraints.maxWidth;
-            
-            return ClipRect(
-              child: SizedBox(
-                height: widget.height,
-                width: availableWidth,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    AnimatedBuilder(
-                      animation: Listenable.merge([_walkController, _bounceController]),
-                      child: logoImage,
-                      builder: (context, child) {
-                        final totalDistance = availableWidth + manSize;
-                        final xPos = -manSize + (_walkController.value * totalDistance);
-                        
-                        return Positioned(
-                          left: xPos,
-                          child: Transform.translate(
-                            offset: Offset(0, _bounceAnimation.value),
-                            child: child,
-                          ),
-                        );
-                      },
-                    ),
-                    AnimatedBuilder(
-                      animation: _walkController,
-                      builder: (context, _) {
-                        final totalDistance = availableWidth + manSize;
-                        final xPos = -manSize + (_walkController.value * totalDistance);
-                        final manCenter = xPos + manSize / 2;
-                        final textCenter = availableWidth / 2;
-                        
-                        const double textWidth = 140.0;
-                        final riseStart = textCenter - textWidth / 2 - manSize * 0.8;
-                        final holdStart = textCenter - textWidth / 2 + 10.0;
-                        final holdEnd = textCenter + textWidth / 2 + manSize * 0.6;
-                        final landEnd = holdEnd + 60.0;
-                        
-                        final maxJump = -widget.height * 0.65;
-                        double yOffset = 0.0;
-                        
-                        if (manCenter >= riseStart && manCenter <= landEnd) {
-                          if (manCenter < holdStart) {
-                            final progress = (manCenter - riseStart) / (holdStart - riseStart);
-                            yOffset = maxJump * Curves.easeOut.transform(progress.clamp(0.0, 1.0));
-                          } else if (manCenter <= holdEnd) {
-                            yOffset = maxJump;
-                          } else {
-                            final progress = 1.0 - ((manCenter - holdEnd) / (landEnd - holdEnd));
-                            yOffset = maxJump * Curves.easeInOut.transform(progress.clamp(0.0, 1.0));
-                          }
-                        }
-                        
-                        return Transform.translate(
-                          offset: Offset(0, yOffset),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'The Fresh',
-                                style: TextStyle(
-                                  fontFamily: 'Georgia',
-                                  color: _brandGold,
-                                  fontSize: widget.height * 0.28,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.5,
-                                  height: 1.1,
-                                ),
-                              ),
-                              Text(
-                                'YARD',
-                                style: TextStyle(
-                                  fontFamily: 'Georgia',
-                                  color: _brandGold,
-                                  fontSize: widget.height * 0.22,
-                                  fontWeight: FontWeight.w400,
-                                  letterSpacing: 4.0,
-                                  height: 1.1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+            // 2. "THE"
+            Text(
+              'THE',
+              style: TextStyle(
+                fontFamily: 'Georgia',
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: color,
+                letterSpacing: 3.5,
+                height: 1.0,
               ),
-            );
-          },
+            ),
+            const SizedBox(height: 1.5),
+
+            // 3. "FRESH"
+            Text(
+              'FRESH',
+              style: TextStyle(
+                fontFamily: 'Georgia',
+                fontSize: 17.5,
+                fontWeight: FontWeight.w900,
+                color: color,
+                letterSpacing: 2.0,
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(height: 1.5),
+
+            // 4. "YARD"
+            Text(
+              'YARD',
+              style: TextStyle(
+                fontFamily: 'Georgia',
+                fontSize: 17.5,
+                fontWeight: FontWeight.w900,
+                color: color,
+                letterSpacing: 2.5,
+                height: 1.0,
+              ),
+            ),
+          ],
         ),
-      );
-    } else {
-      return RepaintBoundary(
-        child: AnimatedBuilder(
-          animation: _bounceController,
-          child: logoImage,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, _bounceAnimation.value),
-              child: child,
-            );
-          },
-        ),
-      );
-    }
+      ),
+    );
   }
+}
+
+class _SproutLeavesPainter extends CustomPainter {
+  final Color color;
+
+  _SproutLeavesPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final linePaint = Paint()
+      ..color = AppColors.brandDarkGreen
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9
+      ..strokeCap = StrokeCap.round;
+
+    final w = size.width;
+    final h = size.height;
+
+    // Center base
+    final baseX = w * 0.5;
+    final baseY = h * 0.98;
+
+    // Left leaf path
+    final leftLeaf = Path();
+    leftLeaf.moveTo(baseX, baseY);
+    // Outer lower curve to tip
+    leftLeaf.cubicTo(
+      w * 0.22, baseY * 0.9,
+      w * 0.04, h * 0.45,
+      w * 0.02, h * 0.22,
+    );
+    // Outer upper curve from tip back to base
+    leftLeaf.cubicTo(
+      w * 0.16, h * 0.04,
+      w * 0.40, h * 0.45,
+      baseX, baseY,
+    );
+    leftLeaf.close();
+    canvas.drawPath(leftLeaf, fillPaint);
+
+    // Right leaf path (larger, per brand logo)
+    final rightLeaf = Path();
+    rightLeaf.moveTo(baseX, baseY);
+    // Outer lower curve to tip
+    rightLeaf.cubicTo(
+      w * 0.72, baseY * 0.85,
+      w * 0.94, h * 0.35,
+      w * 0.98, h * 0.08,
+    );
+    // Outer upper curve from tip back to base
+    rightLeaf.cubicTo(
+      w * 0.82, h * 0.01,
+      w * 0.58, h * 0.40,
+      baseX, baseY,
+    );
+    rightLeaf.close();
+    canvas.drawPath(rightLeaf, fillPaint);
+
+    // Left leaf vein
+    final leftVein = Path();
+    leftVein.moveTo(baseX, baseY);
+    leftVein.quadraticBezierTo(w * 0.22, h * 0.45, w * 0.08, h * 0.24);
+    canvas.drawPath(leftVein, linePaint);
+
+    // Right leaf vein
+    final rightVein = Path();
+    rightVein.moveTo(baseX, baseY);
+    rightVein.quadraticBezierTo(w * 0.76, h * 0.38, w * 0.92, h * 0.12);
+    canvas.drawPath(rightVein, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SproutLeavesPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

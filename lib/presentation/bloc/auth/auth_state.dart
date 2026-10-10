@@ -22,7 +22,24 @@ class Authenticated extends AuthState {
   List<Object?> get props => [customer, accessToken];
 }
 
+/// Emitted when a 6-digit login/verification code has been sent to customer's email
+class OtpSentState extends AuthState {
+  final String email;
+  final bool isNewUser;
+  final String? message;
+
+  const OtpSentState({
+    required this.email,
+    required this.isNewUser,
+    this.message,
+  });
+
+  @override
+  List<Object?> get props => [email, isNewUser, message];
+}
+
 class Unauthenticated extends AuthState {}
+
 
 class AuthError extends AuthState {
   final String message;
@@ -35,8 +52,18 @@ class AuthError extends AuthState {
 
 class RegisterSuccess extends AuthState {
   final String message;
+  final String? registeredEmail;
 
-  const RegisterSuccess(this.message);
+  const RegisterSuccess(this.message, {this.registeredEmail});
+
+  @override
+  List<Object?> get props => [message, registeredEmail];
+}
+
+class ForgotPasswordSuccess extends AuthState {
+  final String message;
+
+  const ForgotPasswordSuccess(this.message);
 
   @override
   List<Object?> get props => [message];

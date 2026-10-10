@@ -7,7 +7,7 @@ import '../widgets/animated_walking_man.dart';
 import '../bloc/cart/cart_bloc.dart';
 import '../bloc/cart/cart_event.dart';
 import '../bloc/cart/cart_state.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/safe_network_image.dart';
 
 const Color brandDarkGreen = AppColors.brandDarkGreen;
 const Color brandCream = AppColors.brandCream;
@@ -29,6 +29,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final startingPrice = widget.product.variants.isNotEmpty ? widget.product.variants.first.price : 0.0;
+    final effectiveHeroTag = widget.heroTag ?? 'product_image_${widget.product.id}';
     
     return Scaffold(
       backgroundColor: brandDarkGreen,
@@ -62,21 +63,22 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product Image with Hero
-            Hero(
-              tag: widget.heroTag ?? 'product_image_${widget.product.id}',
-              child: Container(
-                width: double.infinity,
-                height: 350,
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1E9D7),
-                  borderRadius: BorderRadius.circular(16),
-                  image: widget.product.imageUrl != null 
-                    ? DecorationImage(image: CachedNetworkImageProvider(widget.product.imageUrl!), fit: BoxFit.cover)
-                    : null,
+            Container(
+              width: double.infinity,
+              height: 340,
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Hero(
+                  tag: effectiveHeroTag,
+                  child: SafeNetworkImage(
+                    imageUrl: widget.product.imageUrl ?? '',
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                child: widget.product.imageUrl == null ? const Icon(Icons.local_florist, size: 80, color: brandDarkGreen) : null,
               ),
             ),
             
@@ -100,17 +102,20 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   // Price and Sale
                   Row(
                     children: [
-                      // Old Price Mock
-                      Text(
-                        'LE ${(startingPrice * 1.2).toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: brandGold.withValues(alpha: 0.5),
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: brandGold.withValues(alpha: 0.5),
+                      if (widget.product.variants.isNotEmpty &&
+                          widget.product.variants.first.compareAtPrice != null &&
+                          widget.product.variants.first.compareAtPrice! > startingPrice) ...[
+                        Text(
+                          'LE ${widget.product.variants.first.compareAtPrice!.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: brandGold.withValues(alpha: 0.5),
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: brandGold.withValues(alpha: 0.5),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
+                        const SizedBox(width: 12),
+                      ],
                       // New Price
                       Text(
                         'LE ${startingPrice.toStringAsFixed(2)}',
@@ -125,18 +130,24 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   const SizedBox(height: 8),
                   
                   // Sale Badge
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: brandGold.withValues(alpha: 0.5)),
-                          borderRadius: BorderRadius.circular(20),
+                  if (widget.product.variants.isNotEmpty &&
+                      widget.product.variants.first.compareAtPrice != null &&
+                      widget.product.variants.first.compareAtPrice! > startingPrice)
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDC2626),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${((1 - startingPrice / widget.product.variants.first.compareAtPrice!) * 100).toStringAsFixed(0)}% OFF',
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
                         ),
-                        child: const Text('Sale', style: TextStyle(color: brandGold, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   
                   const SizedBox(height: 16),
                   Text(

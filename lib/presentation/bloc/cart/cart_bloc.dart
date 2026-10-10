@@ -13,9 +13,15 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<UpdateQuantityEvent>(_onUpdateQuantity);
     on<ClearCartEvent>(_onClearCart);
     on<CreateCheckoutSessionEvent>(_onCreateCheckoutSession);
+    on<ResetCheckoutStateEvent>(_onResetCheckoutState);
   }
 
   void _onAddToCart(AddToCartEvent event, Emitter<CartState> emit) {
+    if (event.variant.id.startsWith('fallback_') ||
+        event.variant.id.startsWith('v_offer_')) {
+      return;
+    }
+
     final currentItems = List<CartItem>.from(state.items);
     final index = currentItems.indexWhere(
       (item) => item.selectedVariant.id == event.variant.id,
@@ -34,14 +40,24 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       ));
     }
 
-    emit(state.copyWith(items: currentItems));
+    emit(state.copyWith(
+      items: currentItems,
+      clearCheckoutUrl: true,
+      clearCheckoutError: true,
+      clearCheckoutNotice: true,
+    ));
   }
 
   void _onRemoveFromCart(RemoveFromCartEvent event, Emitter<CartState> emit) {
     final updatedItems = state.items
         .where((item) => item.selectedVariant.id != event.variantId)
         .toList();
-    emit(state.copyWith(items: updatedItems));
+    emit(state.copyWith(
+      items: updatedItems,
+      clearCheckoutUrl: true,
+      clearCheckoutError: true,
+      clearCheckoutNotice: true,
+    ));
   }
 
   void _onUpdateQuantity(UpdateQuantityEvent event, Emitter<CartState> emit) {
@@ -57,8 +73,21 @@ class CartBloc extends Bloc<CartEvent, CartState> {
 
     if (index >= 0) {
       currentItems[index] = currentItems[index].copyWith(quantity: event.newQuantity);
-      emit(state.copyWith(items: currentItems));
+      emit(state.copyWith(
+        items: currentItems,
+        clearCheckoutUrl: true,
+        clearCheckoutError: true,
+        clearCheckoutNotice: true,
+      ));
     }
+  }
+
+  void _onResetCheckoutState(ResetCheckoutStateEvent event, Emitter<CartState> emit) {
+    emit(state.copyWith(
+      clearCheckoutUrl: true,
+      clearCheckoutError: true,
+      clearCheckoutNotice: true,
+    ));
   }
 
   void _onClearCart(ClearCartEvent event, Emitter<CartState> emit) {

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/services/admin_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../bloc/auth/auth_event.dart';
 import '../bloc/auth/auth_state.dart';
+import '../pages/admin_dashboard_page.dart';
 import '../widgets/auth_login_form.dart';
 import '../widgets/auth_register_form.dart';
+import '../widgets/otp_verification_form.dart';
 import '../widgets/order_card.dart';
+
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -17,6 +21,7 @@ class ProfileView extends StatefulWidget {
 
 class _ProfileViewState extends State<ProfileView> {
   bool _isLoginTab = true;
+  String? _prefilledEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -30,11 +35,11 @@ class _ProfileViewState extends State<ProfileView> {
               content: Row(
                 children: [
                   const Icon(Icons.error_outline, color: Colors.white),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       state.message,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -52,11 +57,11 @@ class _ProfileViewState extends State<ProfileView> {
               content: Row(
                 children: [
                   const Icon(Icons.check_circle_outline, color: AppColors.brandGold),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       state.message,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.brandGold,
                         fontWeight: FontWeight.bold,
                       ),
@@ -68,12 +73,36 @@ class _ProfileViewState extends State<ProfileView> {
           );
           setState(() {
             _isLoginTab = true;
+            _prefilledEmail = state.registeredEmail;
           });
+        } else if (state is ForgotPasswordSuccess) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.brandDarkGreen,
+              duration: const Duration(seconds: 4),
+              content: Row(
+                children: [
+                  const Icon(Icons.mark_email_read_outlined, color: AppColors.brandGold),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      state.message,
+                      style: TextStyle(
+                        color: AppColors.brandGold,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
       },
       builder: (context, state) {
         if (state is AuthLoading) {
-          return const Center(
+          return Center(
             key: ValueKey('profile_loading'),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -138,7 +167,7 @@ class _ProfileViewState extends State<ProfileView> {
                                 customer.firstName.isNotEmpty
                                     ? customer.firstName[0].toUpperCase()
                                     : 'U',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.brandGold,
@@ -146,7 +175,7 @@ class _ProfileViewState extends State<ProfileView> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,14 +184,14 @@ class _ProfileViewState extends State<ProfileView> {
                                   customer.fullName.isNotEmpty
                                       ? customer.fullName
                                       : 'Valued Customer',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AppColors.brandGold,
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'Georgia',
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4),
                                 Text(
                                   customer.email,
                                   style: TextStyle(
@@ -187,7 +216,7 @@ class _ProfileViewState extends State<ProfileView> {
                             icon: const Icon(
                               Icons.logout,
                               color: Colors.redAccent,
-                              size: 26,
+                              size: 24,
                             ),
                             onPressed: () {
                               context.read<AuthBloc>().add(LogoutEvent());
@@ -204,7 +233,7 @@ class _ProfileViewState extends State<ProfileView> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -217,7 +246,7 @@ class _ProfileViewState extends State<ProfileView> {
                             color: AppColors.brandGold.withValues(alpha: 0.4),
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.verified, color: AppColors.brandGold, size: 16),
@@ -233,15 +262,44 @@ class _ProfileViewState extends State<ProfileView> {
                           ],
                         ),
                       ),
+
+                      // Admin Dashboard Button: Strictly for Authorized Admin Users Only
+                      if (AdminService.instance.isEmailAdmin(customer.email)) ...[
+                        Container(
+                          margin: const EdgeInsets.only(top: 14),
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.brandGold,
+                              foregroundColor: AppColors.brandDarkGreen,
+                              elevation: 4,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            onPressed: () => _showAdminPinPrompt(context),
+                            icon: const Icon(Icons.admin_panel_settings_rounded, color: AppColors.brandDarkGreen, size: 20),
+                            label: const Text(
+                              "👑 Admin Control Center",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 13.5,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
 
                 // Saved Address Card
                 if (customer.defaultAddress != null &&
                     customer.defaultAddress!.isNotEmpty) ...[
-                  const Text(
+                  Text(
                     "Saved Delivery Address",
                     style: TextStyle(
                       fontSize: 18,
@@ -250,104 +308,74 @@ class _ProfileViewState extends State<ProfileView> {
                       fontFamily: 'Georgia',
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppColors.brandDarkGreen.withValues(alpha: 0.15),
+                        color: AppColors.brandGold.withValues(alpha: 0.3),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.brandDarkGreen.withValues(alpha: 0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.location_on,
-                            color: AppColors.brandDarkGreen,
-                            size: 24,
-                          ),
+                        const Icon(
+                          Icons.location_on_outlined,
+                          color: AppColors.brandDarkGreen,
+                          size: 24,
                         ),
-                        const SizedBox(width: 14),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             customer.defaultAddress!,
-                            style: const TextStyle(
-                              color: AppColors.brandTextDark,
+                            style: TextStyle(
                               fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                              color: AppColors.brandTextDark,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 20),
                 ],
 
-                // Order History Section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Order History (${customer.orders.length})",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.brandDarkGreen,
-                        fontFamily: 'Georgia',
-                      ),
-                    ),
-                    const Icon(Icons.history, color: AppColors.brandDarkGreen),
-                  ],
+                // Past Orders List
+                Text(
+                  "Order History",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.brandDarkGreen,
+                    fontFamily: 'Georgia',
+                  ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 8),
+
                 if (customer.orders.isEmpty)
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(28),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppColors.brandDarkGreen.withValues(alpha: 0.08),
+                        color: AppColors.brandGold.withValues(alpha: 0.3),
                       ),
                     ),
-                    child: const Column(
+                    child: Column(
                       children: [
                         Icon(
-                          Icons.inventory_2_outlined,
-                          size: 54,
-                          color: AppColors.brandGold,
+                          Icons.shopping_bag_outlined,
+                          size: 40,
+                          color: Colors.grey,
                         ),
-                        SizedBox(height: 12),
+                        SizedBox(height: 8),
                         Text(
-                          "No past orders found yet.",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.brandDarkGreen,
-                            fontSize: 17,
-                          ),
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          "Your completed store orders will appear here automatically.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey, fontSize: 13),
+                          "No orders placed yet.",
+                          style: TextStyle(color: Colors.grey, fontSize: 14),
                         ),
                       ],
                     ),
@@ -361,12 +389,12 @@ class _ProfileViewState extends State<ProfileView> {
                       return OrderCard(order: customer.orders[index]);
                     },
                   ),
+                SizedBox(height: 30),
               ],
             ),
           );
         }
 
-        // Unauthenticated View
         return SingleChildScrollView(
           key: const ValueKey('unauthenticated_profile'),
           padding: const EdgeInsets.all(20.0),
@@ -374,12 +402,12 @@ class _ProfileViewState extends State<ProfileView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
 
-              // Luxury Hero Card Header
+              // Luxury Member Card Hero
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [AppColors.brandDarkGreen, Color(0xFF104029)],
@@ -389,8 +417,8 @@ class _ProfileViewState extends State<ProfileView> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.brandDarkGreen.withValues(alpha: 0.2),
-                      blurRadius: 10,
+                      color: AppColors.brandDarkGreen.withValues(alpha: 0.25),
+                      blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
@@ -409,8 +437,8 @@ class _ProfileViewState extends State<ProfileView> {
                         size: 36,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
+                    SizedBox(height: 12),
+                    Text(
                       "Welcome to The Fresh Yard",
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -420,7 +448,7 @@ class _ProfileViewState extends State<ProfileView> {
                         fontFamily: 'Georgia',
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Text(
                       "Sign in or create an account to view past orders, track live deliveries, & enjoy member perks.",
                       textAlign: TextAlign.center,
@@ -432,7 +460,7 @@ class _ProfileViewState extends State<ProfileView> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               // Main Glassmorphic Auth Form Card
               Container(
@@ -451,112 +479,55 @@ class _ProfileViewState extends State<ProfileView> {
                 ),
                 child: Column(
                   children: [
-                    // Segmented Pill Switcher
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.brandDarkGreen.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(25),
+                    if (state is OtpSentState) ...[
+                      OtpVerificationForm(
+                        email: state.email,
+                        isNewUser: state.isNewUser,
+                        onBack: () => context.read<AuthBloc>().add(LogoutEvent()),
                       ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isLoginTab = true;
-                                });
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _isLoginTab
-                                      ? AppColors.brandDarkGreen
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(25),
-                                  boxShadow: _isLoginTab
-                                      ? [
-                                          BoxShadow(
-                                            color: AppColors.brandDarkGreen.withValues(
-                                              alpha: 0.2,
-                                            ),
-                                            blurRadius: 4,
-                                          ),
-                                        ]
-                                      : [],
-                                ),
-                                child: Text(
-                                  "Sign In",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: _isLoginTab
-                                        ? AppColors.brandGold
-                                        : AppColors.brandDarkGreen,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isLoginTab = false;
-                                });
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: !_isLoginTab
-                                      ? AppColors.brandDarkGreen
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(25),
-                                  boxShadow: !_isLoginTab
-                                      ? [
-                                          BoxShadow(
-                                            color: AppColors.brandDarkGreen.withValues(
-                                              alpha: 0.2,
-                                            ),
-                                            blurRadius: 4,
-                                          ),
-                                        ]
-                                      : [],
-                                ),
-                                child: Text(
-                                  "Create Account",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: !_isLoginTab
-                                        ? AppColors.brandGold
-                                        : AppColors.brandDarkGreen,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    ] else ...[
+                      if (_isLoginTab)
+                        AuthLoginForm(initialEmail: _prefilledEmail)
+                      else
+                        const AuthRegisterForm(),
 
-                    if (_isLoginTab)
-                      const AuthLoginForm()
-                    else
-                      const AuthRegisterForm(),
+                      const SizedBox(height: 16),
+
+                      // Toggle link
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isLoginTab = !_isLoginTab;
+                          });
+                        },
+                        child: Text.rich(
+                          TextSpan(
+                            text: _isLoginTab
+                                ? "Don't have an account? "
+                                : "Already have an account? ",
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: _isLoginTab ? "Create Account" : "Sign In",
+                                style: const TextStyle(
+                                  color: AppColors.brandDarkGreen,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               // Benefits Grid Footer
               Row(
@@ -570,9 +541,105 @@ class _ProfileViewState extends State<ProfileView> {
                   _buildBenefitBadge(Icons.security, "Shopify Secured"),
                 ],
               ),
+              const SizedBox(height: 20),
+
               const SizedBox(height: 16),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showAdminPinPrompt(BuildContext parentContext) {
+    final pinController = TextEditingController();
+
+    showDialog(
+      context: parentContext,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (builderCtx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: const BorderSide(color: AppColors.brandGold, width: 1.2),
+              ),
+              title: Row(
+                children: [
+                  const Icon(Icons.admin_panel_settings_rounded, color: AppColors.brandDarkGreen, size: 24),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Admin Authorization",
+                      style: TextStyle(
+                        fontFamily: 'Georgia',
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.brandDarkGreen,
+                        fontSize: 17,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Enter the 4-digit Admin Security PIN to manage banners, categories, and view app sales.",
+                    style: TextStyle(fontSize: 12.5, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: pinController,
+                    keyboardType: TextInputType.number,
+                    obscureText: true,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      labelText: "4-Digit PIN",
+                      hintText: "••••",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogCtx).pop(),
+                  child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.brandDarkGreen,
+                    foregroundColor: AppColors.brandGold,
+                  ),
+                  onPressed: () async {
+                    final pin = pinController.text.trim();
+                    final isValid = await AdminService.instance.verifyPin(pin);
+                    if (dialogCtx.mounted) {
+                      Navigator.of(dialogCtx).pop();
+                    }
+                    if (isValid && parentContext.mounted) {
+                      Navigator.push(
+                        parentContext,
+                        MaterialPageRoute(builder: (_) => const AdminDashboardPage()),
+                      );
+                    } else if (!isValid && parentContext.mounted) {
+                      ScaffoldMessenger.of(parentContext).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: Colors.redAccent,
+                          content: Text("Incorrect Admin PIN. Default PIN is 2026."),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text("Enter Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -582,10 +649,10 @@ class _ProfileViewState extends State<ProfileView> {
     return Column(
       children: [
         Icon(icon, color: AppColors.brandDarkGreen, size: 22),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.brandDarkGreen,
             fontSize: 11,
             fontWeight: FontWeight.bold,
@@ -595,3 +662,6 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 }
+
+
+

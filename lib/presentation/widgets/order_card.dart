@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../domain/entities/customer.dart';
 
@@ -45,10 +45,10 @@ class OrderCard extends StatelessWidget {
                     color: AppColors.brandDarkGreen,
                     size: 20,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'Order #${order.orderNumber}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: AppColors.brandDarkGreen,
@@ -80,7 +80,7 @@ class OrderCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           if (order.itemTitles.isNotEmpty)
             Text(
               order.itemTitles.join(', '),
@@ -91,22 +91,22 @@ class OrderCard extends StatelessWidget {
                 fontSize: 13,
               ),
             ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           const Divider(height: 1),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 order.processedAt.split('T').first,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.grey,
                   fontSize: 12,
                 ),
               ),
               Text(
                 'LE ${order.totalPrice.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 16,
                   color: AppColors.brandDarkGreen,
@@ -119,3 +119,5 @@ class OrderCard extends StatelessWidget {
     );
   }
 }
+
+

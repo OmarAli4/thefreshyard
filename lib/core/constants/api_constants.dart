@@ -6,8 +6,8 @@ class ApiConstants {
   static const String corsProxyEndpoint = 'https://corsproxy.io/?$graphqlEndpoint';
 
   static const String productsQuery = r'''
-    query getProducts($first: Int!) {
-      products(first: $first) {
+    query getProducts($first: Int!, $after: String) {
+      products(first: $first, after: $after) {
         pageInfo {
           hasNextPage
           endCursor
@@ -20,7 +20,7 @@ class ApiConstants {
             images(first: 1) {
               edges {
                 node {
-                  url(transform: {maxWidth: 400, maxHeight: 400})
+                  url(transform: {maxWidth: 600, maxHeight: 600})
                 }
               }
             }
@@ -33,10 +33,32 @@ class ApiConstants {
                     amount
                     currencyCode
                   }
+                  compareAtPrice {
+                    amount
+                    currencyCode
+                  }
                 }
               }
             }
+            rating: metafield(namespace: "reviews", key: "rating") {
+              value
+            }
+            ratingCount: metafield(namespace: "reviews", key: "rating_count") {
+              value
+            }
           }
+        }
+      }
+    }
+  ''';
+
+  static const String customerRecoverMutation = r'''
+    mutation customerRecover($email: String!) {
+      customerRecover(email: $email) {
+        customerUserErrors {
+          code
+          field
+          message
         }
       }
     }
@@ -57,7 +79,7 @@ class ApiConstants {
             images(first: 1) {
               edges {
                 node {
-                  url(transform: {maxWidth: 400, maxHeight: 400})
+                  url(transform: {maxWidth: 600, maxHeight: 600})
                 }
               }
             }
@@ -70,8 +92,18 @@ class ApiConstants {
                     amount
                     currencyCode
                   }
+                  compareAtPrice {
+                    amount
+                    currencyCode
+                  }
                 }
               }
+            }
+            rating: metafield(namespace: "reviews", key: "rating") {
+              value
+            }
+            ratingCount: metafield(namespace: "reviews", key: "rating_count") {
+              value
             }
           }
         }
@@ -80,10 +112,10 @@ class ApiConstants {
   ''';
 
   static const String collectionProductsQuery = r'''
-    query getCollectionProducts($handle: String!, $first: Int!) {
+    query getCollectionProducts($handle: String!, $first: Int!, $after: String) {
       collection(handle: $handle) {
         title
-        products(first: $first) {
+        products(first: $first, after: $after) {
           pageInfo {
             hasNextPage
             endCursor
@@ -96,7 +128,7 @@ class ApiConstants {
               images(first: 1) {
                 edges {
                   node {
-                    url(transform: {maxWidth: 400, maxHeight: 400})
+                    url(transform: {maxWidth: 600, maxHeight: 600})
                   }
                 }
               }
@@ -109,8 +141,18 @@ class ApiConstants {
                       amount
                       currencyCode
                     }
+                    compareAtPrice {
+                      amount
+                      currencyCode
+                    }
                   }
                 }
+              }
+              rating: metafield(namespace: "reviews", key: "rating") {
+                value
+              }
+              ratingCount: metafield(namespace: "reviews", key: "rating_count") {
+                value
               }
             }
           }
@@ -127,6 +169,9 @@ class ApiConstants {
             id
             title
             handle
+            image {
+              url
+            }
           }
         }
       }
@@ -166,6 +211,7 @@ class ApiConstants {
       }
     }
   ''';
+
 
   static const String getCustomerProfileQuery = r'''
     query getCustomer($customerAccessToken: String!) {

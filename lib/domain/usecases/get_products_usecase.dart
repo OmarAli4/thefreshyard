@@ -10,9 +10,7 @@ class GetProductsUseCase {
     final stream = repository.getProducts(limit: limit, collectionHandle: collectionHandle);
     
     await for (final products in stream) {
-      final sortedProducts = List<Product>.from(products)
-        ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
-      yield sortedProducts;
+      yield products; // Preserves exact Shopify Editorial & Collection Sort Order!
     }
   }
 }

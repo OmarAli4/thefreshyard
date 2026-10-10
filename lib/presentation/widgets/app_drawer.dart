@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_colors.dart';
 import '../bloc/auth/auth_bloc.dart';
@@ -33,7 +33,7 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.person, color: AppColors.brandGold),
-            title: const Text(
+            title: Text(
               'Sign In / Account',
               style: TextStyle(color: AppColors.brandGold, fontWeight: FontWeight.bold),
             ),
@@ -46,7 +46,7 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.history, color: AppColors.brandGold),
-            title: const Text(
+            title: Text(
               'Order History',
               style: TextStyle(color: AppColors.brandGold, fontWeight: FontWeight.bold),
             ),
@@ -59,7 +59,7 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.local_offer, color: AppColors.brandGold),
-            title: const Text(
+            title: Text(
               'Offers & Promos',
               style: TextStyle(color: AppColors.brandGold, fontWeight: FontWeight.bold),
             ),
@@ -68,7 +68,7 @@ class AppDrawer extends StatelessWidget {
           const Divider(color: AppColors.brandGold),
           ListTile(
             leading: const Icon(Icons.help_outline, color: AppColors.brandGold),
-            title: const Text(
+            title: Text(
               'Help & Support',
               style: TextStyle(color: AppColors.brandGold, fontWeight: FontWeight.bold),
             ),
@@ -76,7 +76,7 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.exit_to_app, color: AppColors.brandGold),
-            title: const Text(
+            title: Text(
               'Sign Out',
               style: TextStyle(color: AppColors.brandGold, fontWeight: FontWeight.bold),
             ),
@@ -90,3 +90,4 @@ class AppDrawer extends StatelessWidget {
     );
   }
 }
+

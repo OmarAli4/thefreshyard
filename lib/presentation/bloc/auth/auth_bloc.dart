@@ -14,11 +14,77 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     SecureStorageService? secureStorageService,
   })  : secureStorageService = secureStorageService ?? SecureStorageService(),
         super(Unauthenticated()) {
+    on<SendLoginCodeEvent>(_onSendLoginCode);
+    on<SendRegisterCodeEvent>(_onSendRegisterCode);
+    on<VerifyOtpEvent>(_onVerifyOtp);
+    on<ResendOtpEvent>(_onResendOtp);
     on<LoginEvent>(_onLogin);
     on<RegisterEvent>(_onRegister);
+    on<ForgotPasswordEvent>(_onForgotPassword);
     on<LogoutEvent>(_onLogout);
     on<FetchCustomerProfileEvent>(_onFetchProfile);
   }
+
+  Future<void> _onSendLoginCode(SendLoginCodeEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final token = await customerRepository.sendPasswordlessLogin(event.email);
+      _savedAccessToken = token;
+      await secureStorageService.saveCustomerToken(token);
+      await secureStorageService.saveCredentials(event.email.trim(), 'passwordless_session');
+      final profile = await customerRepository.getCustomerProfile(token);
+      emit(Authenticated(profile, accessToken: token));
+    } catch (e) {
+      emit(AuthError(e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onSendRegisterCode(SendRegisterCodeEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final token = await customerRepository.registerPasswordless(
+        event.firstName,
+        event.lastName,
+        event.email,
+      );
+      _savedAccessToken = token;
+      await secureStorageService.saveCustomerToken(token);
+      await secureStorageService.saveCredentials(event.email.trim(), 'passwordless_session');
+      final profile = await customerRepository.getCustomerProfile(token);
+      emit(Authenticated(profile, accessToken: token));
+    } catch (e) {
+      emit(AuthError(e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onVerifyOtp(VerifyOtpEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final token = await customerRepository.verifyPasswordlessCode(event.email, event.code);
+      _savedAccessToken = token;
+      await secureStorageService.saveCustomerToken(token);
+      await secureStorageService.saveCredentials(event.email, 'passwordless_session');
+      final profile = await customerRepository.getCustomerProfile(token);
+      emit(Authenticated(profile, accessToken: token));
+    } catch (e) {
+      emit(AuthError(e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onResendOtp(ResendOtpEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final token = await customerRepository.sendPasswordlessLogin(event.email);
+      _savedAccessToken = token;
+      await secureStorageService.saveCustomerToken(token);
+      await secureStorageService.saveCredentials(event.email.trim(), 'passwordless_session');
+      final profile = await customerRepository.getCustomerProfile(token);
+      emit(Authenticated(profile, accessToken: token));
+    } catch (e) {
+      emit(AuthError(e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
 
   Future<void> _onLogin(LoginEvent event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
@@ -43,7 +109,34 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.email,
         event.password,
       );
-      emit(const RegisterSuccess('Account created successfully! Please sign in.'));
+
+      // Seamless auto-login right after registration
+      try {
+        final token = await customerRepository.login(event.email, event.password);
+        _savedAccessToken = token;
+        await secureStorageService.saveCustomerToken(token);
+        await secureStorageService.saveCredentials(event.email, event.password);
+        final profile = await customerRepository.getCustomerProfile(token);
+        emit(Authenticated(profile, accessToken: token));
+      } catch (_) {
+        // Fallback if store requires email activation link
+        emit(RegisterSuccess(
+          'Account created successfully! Please sign in.',
+          registeredEmail: event.email,
+        ));
+      }
+    } catch (e) {
+      emit(AuthError(e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onForgotPassword(ForgotPasswordEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await customerRepository.recoverPassword(event.email);
+      emit(const ForgotPasswordSuccess(
+        'Password reset link has been sent to your email. Please check your inbox.',
+      ));
     } catch (e) {
       emit(AuthError(e.toString().replaceAll('Exception: ', '')));
     }

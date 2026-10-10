@@ -5,23 +5,53 @@ import '../bloc/auth/auth_bloc.dart';
 import '../bloc/auth/auth_event.dart';
 
 class AuthLoginForm extends StatefulWidget {
-  const AuthLoginForm({super.key});
+  final String? initialEmail;
+
+  const AuthLoginForm({
+    super.key,
+    this.initialEmail,
+  });
 
   @override
   State<AuthLoginForm> createState() => _AuthLoginFormState();
 }
 
 class _AuthLoginFormState extends State<AuthLoginForm> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  bool _isPasswordVisible = false;
+  late final TextEditingController _emailController;
   String? _formValidationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController(text: widget.initialEmail ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant AuthLoginForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialEmail != null && widget.initialEmail != oldWidget.initialEmail) {
+      _emailController.text = widget.initialEmail!;
+    }
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
+  }
+
+  void _confirmLogin() {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _formValidationError = "Please enter your registered email address.");
+      return;
+    }
+    setState(() => _formValidationError = null);
+    context.read<AuthBloc>().add(
+      SendLoginCodeEvent(
+        email: email,
+      ),
+    );
   }
 
   @override
@@ -61,6 +91,8 @@ class _AuthLoginFormState extends State<AuthLoginForm> {
               ],
             ),
           ),
+
+        // Email Field
         TextField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
@@ -83,42 +115,11 @@ class _AuthLoginFormState extends State<AuthLoginForm> {
               borderRadius: BorderRadius.circular(16),
             ),
           ),
+          onSubmitted: (_) => _confirmLogin(),
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: _passwordController,
-          obscureText: !_isPasswordVisible,
-          decoration: InputDecoration(
-            labelText: "Password",
-            labelStyle: const TextStyle(color: AppColors.brandDarkGreen),
-            prefixIcon: const Icon(
-              Icons.lock_outline,
-              color: AppColors.brandDarkGreen,
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isPasswordVisible
-                    ? Icons.visibility_off
-                    : Icons.visibility,
-                color: AppColors.brandDarkGreen,
-              ),
-              onPressed: () => setState(
-                () => _isPasswordVisible = !_isPasswordVisible,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                color: AppColors.brandDarkGreen,
-                width: 2,
-              ),
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
+
+        // Sign In Button
         SizedBox(
           width: double.infinity,
           height: 52,
@@ -131,31 +132,8 @@ class _AuthLoginFormState extends State<AuthLoginForm> {
                 borderRadius: BorderRadius.circular(26),
               ),
             ),
-            onPressed: () {
-              final email = _emailController.text.trim();
-              final pass = _passwordController.text.trim();
-
-              if (email.isEmpty || !email.contains('@')) {
-                setState(
-                  () => _formValidationError =
-                      "Please enter a valid email address.",
-                );
-                return;
-              }
-              if (pass.isEmpty) {
-                setState(
-                  () => _formValidationError =
-                      "Please enter your password.",
-                );
-                return;
-              }
-
-              setState(() => _formValidationError = null);
-              context.read<AuthBloc>().add(
-                LoginEvent(email: email, password: pass),
-              );
-            },
-            icon: const Icon(Icons.login, color: AppColors.brandGold),
+            onPressed: _confirmLogin,
+            icon: const Icon(Icons.login_rounded, color: AppColors.brandGold, size: 22),
             label: const Text(
               "Sign In",
               style: TextStyle(
